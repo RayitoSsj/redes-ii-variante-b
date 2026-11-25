@@ -1,0 +1,42 @@
+{# Plantilla base: Paso 1 y Paso 9 son iguales en los 6 equipos #}
+{% macro secreto(valor) %}{% if g.scrypt %}algorithm-type scrypt secret {{ valor }}{% else %}secret {{ valor }}{% endif %}{% endmacro %}
+!==================================================
+! {{ equipo.hostname }} - Configuracion generada automaticamente
+! Practica integradora Redes II - Variante B
+! No editar a mano: cambiar datos.yaml y volver a generar
+!==================================================
+enable
+configure terminal
+!
+!---------- PASO 1: Configuracion basica ----------
+hostname {{ equipo.hostname }}
+no ip domain-lookup
+banner motd #{{ g.banner }}#
+! El usuario va antes del min-length si su contrasena tiene menos de 10 caracteres
+username {{ g.usuario }} privilege 15 {{ secreto(g.usuario_password) }}
+security passwords min-length 10
+enable {{ secreto(g.enable_secret) }}
+service password-encryption
+line console 0
+ password {{ g.console_password }}
+ login
+ exec-timeout 5 0
+ logging synchronous
+ exit
+!
+{% block cuerpo %}{% endblock %}
+{% block gestion %}{% endblock %}
+!---------- PASO 9: SSH ----------
+ip domain-name {{ g.dominio }}
+crypto key generate rsa general-keys modulus {{ g.rsa_bits }}
+ip ssh version 2
+login block-for 120 attempts 3 within 60
+line vty {{ vty }}
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ exit
+!
+{% block extra %}{% endblock %}
+end
+copy running-config startup-config

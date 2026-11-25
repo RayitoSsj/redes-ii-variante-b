@@ -1,0 +1,16 @@
+{% extends "_switch.j2" %}
+{% block vlans %}
+{% if equipo.crea_vlans %}
+!---------- PASO 5: VLANs (solo en este servidor VTP) ----------
+{% for v in d.vlans %}
+vlan {{ v.id }}
+ name {{ v.nombre }}
+ exit
+{% endfor %}
+!
+{% endif %}
+{% endblock %}
+{% block stp %}
+spanning-tree vlan {{ stp_primario }} root primary
+spanning-tree vlan {{ stp_secundario }} root secondary
+{% endblock %}

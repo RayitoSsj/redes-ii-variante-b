@@ -1,0 +1,192 @@
+!==================================================
+! R6 - Configuracion generada automaticamente
+! Practica integradora Redes II - Variante B
+! No editar a mano: cambiar datos.yaml y volver a generar
+!==================================================
+enable
+configure terminal
+!
+!---------- PASO 1: Configuracion basica ----------
+hostname R6
+no ip domain-lookup
+banner motd #Acceso restringido. Solo personal autorizado.#
+! El usuario va antes del min-length si su contrasena tiene menos de 10 caracteres
+username admin privilege 15 algorithm-type scrypt secret cisco
+security passwords min-length 10
+enable algorithm-type scrypt secret <PASS10>
+service password-encryption
+line console 0
+ password <PASS10>
+ login
+ exec-timeout 5 0
+ logging synchronous
+ exit
+!
+!---------- PASO 6: Ruteo inter-VLAN, HSRPv2 y serial ----------
+ipv6 unicast-routing
+!
+interface g0/0/0
+ no shutdown
+ exit
+interface g0/0/0.777
+ encapsulation dot1Q 777 native
+ exit
+!
+interface g0/0/0.15
+ encapsulation dot1Q 15
+ ip address 172.16.15.252 255.255.255.0
+ ipv6 address 2001:DB8:CAFE:15::B/64
+ ipv6 address FE80::2 link-local
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 nd prefix 2001:DB8:CAFE:15::/64 no-autoconfig
+ standby version 2
+ standby 15 ip 172.16.15.254
+ standby 15 priority 150
+ standby 15 preempt
+ standby 1015 ipv6 autoconfig
+ standby 1015 priority 150
+ standby 1015 preempt
+ exit
+!
+interface g0/0/0.25
+ encapsulation dot1Q 25
+ ip address 172.16.25.252 255.255.255.0
+ ipv6 address 2001:DB8:CAFE:25::B/64
+ ipv6 address FE80::2 link-local
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 nd prefix 2001:DB8:CAFE:25::/64 no-autoconfig
+ standby version 2
+ standby 25 ip 172.16.25.254
+ standby 25 priority 150
+ standby 25 preempt
+ standby 1025 ipv6 autoconfig
+ standby 1025 priority 150
+ standby 1025 preempt
+ exit
+!
+interface g0/0/0.35
+ encapsulation dot1Q 35
+ ip address 172.16.35.252 255.255.255.0
+ ipv6 address 2001:DB8:CAFE:35::B/64
+ ipv6 address FE80::2 link-local
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 nd prefix 2001:DB8:CAFE:35::/64 no-autoconfig
+ standby version 2
+ standby 35 ip 172.16.35.254
+ standby 1035 ipv6 autoconfig
+ exit
+!
+interface g0/0/0.45
+ encapsulation dot1Q 45
+ ip address 172.16.45.252 255.255.255.0
+ ipv6 address 2001:DB8:CAFE:45::B/64
+ ipv6 address FE80::2 link-local
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 nd prefix 2001:DB8:CAFE:45::/64 no-autoconfig
+ standby version 2
+ standby 45 ip 172.16.45.254
+ standby 1045 ipv6 autoconfig
+ exit
+!
+interface g0/0/0.85
+ encapsulation dot1Q 85
+ ip address 172.16.85.252 255.255.255.0
+ standby version 2
+ standby 85 ip 172.16.85.254
+ standby 85 priority 150
+ standby 85 preempt
+ exit
+!
+interface <SERIAL_R6>
+ ip address 10.20.20.2 255.255.255.252
+ ipv6 address 2001:DB8:CAFE:FFFF::2/64
+ no shutdown
+ exit
+!
+!---------- PASO 7: DHCPv4 y DHCPv6 ----------
+ip dhcp excluded-address 172.16.15.1 172.16.15.120
+ip dhcp excluded-address 172.16.15.241 172.16.15.254
+ip dhcp excluded-address 172.16.25.1 172.16.25.120
+ip dhcp excluded-address 172.16.25.241 172.16.25.254
+ip dhcp excluded-address 172.16.35.1 172.16.35.120
+ip dhcp excluded-address 172.16.35.241 172.16.35.254
+ip dhcp excluded-address 172.16.45.1 172.16.45.120
+ip dhcp excluded-address 172.16.45.241 172.16.45.254
+!
+ip dhcp pool MEDICOS
+ network 172.16.15.0 255.255.255.0
+ default-router 172.16.15.254
+ dns-server 8.8.8.8
+ domain-name clinicasr.lab
+ exit
+ip dhcp pool ENFERMERIA
+ network 172.16.25.0 255.255.255.0
+ default-router 172.16.25.254
+ dns-server 8.8.8.8
+ domain-name clinicasr.lab
+ exit
+ip dhcp pool ADMINISTRACION
+ network 172.16.35.0 255.255.255.0
+ default-router 172.16.35.254
+ dns-server 8.8.8.8
+ domain-name clinicasr.lab
+ exit
+ip dhcp pool PACIENTES
+ network 172.16.45.0 255.255.255.0
+ default-router 172.16.45.254
+ dns-server 8.8.8.8
+ domain-name clinicasr.lab
+ exit
+!
+! DHCPv6: cada router reparte de un /80 distinto -> nunca repiten direccion
+ipv6 dhcp pool V6-MEDICOS
+ address prefix 2001:DB8:CAFE:15:2::/80
+ dns-server 2001:4860:4860::8888
+ domain-name clinicasr.lab
+ exit
+ipv6 dhcp pool V6-ENFERMERIA
+ address prefix 2001:DB8:CAFE:25:2::/80
+ dns-server 2001:4860:4860::8888
+ domain-name clinicasr.lab
+ exit
+ipv6 dhcp pool V6-ADMINISTRACION
+ address prefix 2001:DB8:CAFE:35:2::/80
+ dns-server 2001:4860:4860::8888
+ domain-name clinicasr.lab
+ exit
+ipv6 dhcp pool V6-PACIENTES
+ address prefix 2001:DB8:CAFE:45:2::/80
+ dns-server 2001:4860:4860::8888
+ domain-name clinicasr.lab
+ exit
+!
+interface g0/0/0.15
+ ipv6 dhcp server V6-MEDICOS
+ exit
+interface g0/0/0.25
+ ipv6 dhcp server V6-ENFERMERIA
+ exit
+interface g0/0/0.35
+ ipv6 dhcp server V6-ADMINISTRACION
+ exit
+interface g0/0/0.45
+ ipv6 dhcp server V6-PACIENTES
+ exit
+!
+!---------- PASO 9: SSH ----------
+ip domain-name clinicasr.lab
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+login block-for 120 attempts 3 within 60
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ exit
+!
+end
+copy running-config startup-config

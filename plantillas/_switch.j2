@@ -1,0 +1,49 @@
+{# Bloques comunes a los 4 switches #}
+{% extends "base.j2" %}
+{% macro troncal() %}
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan {{ d.vlan_nativa }}
+ switchport trunk allowed vlan {{ permitidas }}
+ exit{% endmacro %}
+{% block cuerpo %}
+!---------- PASO 2: EtherChannel ----------
+interface range {{ equipo.etherchannel.puertos }}
+ shutdown
+ channel-group {{ equipo.etherchannel.grupo }} mode {{ equipo.etherchannel.modo }}
+ no shutdown
+ exit
+!
+!---------- PASO 3: Troncales ----------
+! (si el switch lo pide, agregar antes: switchport trunk encapsulation dot1q)
+{% for t in equipo.troncales %}
+interface {% if ' - ' in t %}range {% endif %}{{ t }}
+{{ troncal() }}
+{% endfor %}
+interface port-channel {{ equipo.etherchannel.grupo }}
+{{ troncal() }}
+!
+!---------- PASO 4: VTP ----------
+vtp domain {{ d.vtp.dominio }}
+vtp version {{ d.vtp.version }}
+vtp password {{ d.vtp.password }}
+{% if equipo.vtp_modo == 'client' %}
+vtp mode transparent
+{% endif %}
+vtp mode {{ equipo.vtp_modo }}
+!
+{% block vlans %}{% endblock %}
+!---------- PASO 8: Rapid PVST+ ----------
+spanning-tree mode rapid-pvst
+{% block stp %}{% endblock %}
+!
+{% endblock %}
+{% block gestion %}
+!---------- PASO 9: Gestion (VLAN {{ d.vlan_gestion }}) ----------
+interface vlan {{ d.vlan_gestion }}
+ ip address {{ equipo.gestion_ip }} 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway {{ gestion.v4 }}.{{ d.direccionamiento.gateway_hsrp }}
+!
+{% endblock %}

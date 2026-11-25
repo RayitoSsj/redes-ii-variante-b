@@ -1,0 +1,42 @@
+{% extends "_switch.j2" %}
+{% block vlans %}
+!---------- PASO 5: Puertos de acceso (las VLANs llegan por VTP) ----------
+{% for v in vlans_usuario %}
+interface range {{ v.puertos }}
+ switchport mode access
+ switchport access vlan {{ v.id }}
+ exit
+{% endfor %}
+{% for p in equipo.puertos_sin_uso %}
+interface range {{ p }}
+ switchport mode access
+ switchport access vlan {{ d.vlan_sin_uso }}
+ shutdown
+ exit
+{% endfor %}
+!
+{% endblock %}
+{% block extra %}
+!---------- PASO 10: Seguridad ----------
+interface range {{ equipo.puertos_hosts }}
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ exit
+!
+ip dhcp snooping
+ip dhcp snooping vlan {{ ids_usuario }}
+no ip dhcp snooping information option
+ip arp inspection vlan {{ ids_usuario }}
+!
+{% for t in equipo.troncales + ['port-channel ' ~ equipo.etherchannel.grupo] %}
+interface {% if ' - ' in t %}range {% endif %}{{ t }}
+ ip dhcp snooping trust
+ ip arp inspection trust
+ exit
+{% endfor %}
+!
+{% endblock %}

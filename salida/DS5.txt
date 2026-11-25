@@ -1,0 +1,100 @@
+!==================================================
+! DS5 - Configuracion generada automaticamente
+! Practica integradora Redes II - Variante B
+! No editar a mano: cambiar datos.yaml y volver a generar
+!==================================================
+enable
+configure terminal
+!
+!---------- PASO 1: Configuracion basica ----------
+hostname DS5
+no ip domain-lookup
+banner motd #Acceso restringido. Solo personal autorizado.#
+! El usuario va antes del min-length si su contrasena tiene menos de 10 caracteres
+username admin privilege 15 algorithm-type scrypt secret cisco
+security passwords min-length 10
+enable algorithm-type scrypt secret <PASS10>
+service password-encryption
+line console 0
+ password <PASS10>
+ login
+ exec-timeout 5 0
+ logging synchronous
+ exit
+!
+!---------- PASO 2: EtherChannel ----------
+interface range g1/0/5 - 6
+ shutdown
+ channel-group 3 mode auto
+ no shutdown
+ exit
+!
+!---------- PASO 3: Troncales ----------
+! (si el switch lo pide, agregar antes: switchport trunk encapsulation dot1q)
+interface range g1/0/2 - 4
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 777
+ switchport trunk allowed vlan 15,25,35,45,85,777
+ exit
+interface port-channel 3
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 777
+ switchport trunk allowed vlan 15,25,35,45,85,777
+ exit
+!
+!---------- PASO 4: VTP ----------
+vtp domain CLINICA
+vtp version 2
+vtp password Vtp-B2026!
+vtp mode server
+!
+!---------- PASO 5: VLANs (solo en este servidor VTP) ----------
+vlan 15
+ name MEDICOS
+ exit
+vlan 25
+ name ENFERMERIA
+ exit
+vlan 35
+ name ADMINISTRACION
+ exit
+vlan 45
+ name PACIENTES
+ exit
+vlan 85
+ name GESTION
+ exit
+vlan 777
+ name NATIVA
+ exit
+vlan 666
+ name SIN_USO
+ exit
+!
+!---------- PASO 8: Rapid PVST+ ----------
+spanning-tree mode rapid-pvst
+spanning-tree vlan 35,45 root primary
+spanning-tree vlan 15,25,85 root secondary
+!
+!---------- PASO 9: Gestion (VLAN 85) ----------
+interface vlan 85
+ ip address 172.16.85.241 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 172.16.85.254
+!
+!---------- PASO 9: SSH ----------
+ip domain-name clinicasr.lab
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+login block-for 120 attempts 3 within 60
+line vty 0 15
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ exit
+!
+end
+copy running-config startup-config

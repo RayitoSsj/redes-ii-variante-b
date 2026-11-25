@@ -1,0 +1,128 @@
+!==================================================
+! AS7 - Configuracion generada automaticamente
+! Practica integradora Redes II - Variante B
+! No editar a mano: cambiar datos.yaml y volver a generar
+!==================================================
+enable
+configure terminal
+!
+!---------- PASO 1: Configuracion basica ----------
+hostname AS7
+no ip domain-lookup
+banner motd #Acceso restringido. Solo personal autorizado.#
+! El usuario va antes del min-length si su contrasena tiene menos de 10 caracteres
+username admin privilege 15 algorithm-type scrypt secret cisco
+security passwords min-length 10
+enable algorithm-type scrypt secret <PASS10>
+service password-encryption
+line console 0
+ password <PASS10>
+ login
+ exec-timeout 5 0
+ logging synchronous
+ exit
+!
+!---------- PASO 2: EtherChannel ----------
+interface range g1/0/5 - 6
+ shutdown
+ channel-group 4 mode active
+ no shutdown
+ exit
+!
+!---------- PASO 3: Troncales ----------
+! (si el switch lo pide, agregar antes: switchport trunk encapsulation dot1q)
+interface g1/0/4
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 777
+ switchport trunk allowed vlan 15,25,35,45,85,777
+ exit
+interface port-channel 4
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 777
+ switchport trunk allowed vlan 15,25,35,45,85,777
+ exit
+!
+!---------- PASO 4: VTP ----------
+vtp domain CLINICA
+vtp version 2
+vtp password Vtp-B2026!
+vtp mode transparent
+vtp mode client
+!
+!---------- PASO 5: Puertos de acceso (las VLANs llegan por VTP) ----------
+interface range g1/0/7 - 12
+ switchport mode access
+ switchport access vlan 15
+ exit
+interface range g1/0/13 - 17
+ switchport mode access
+ switchport access vlan 25
+ exit
+interface range g1/0/18 - 22
+ switchport mode access
+ switchport access vlan 35
+ exit
+interface range g1/0/23 - 24
+ switchport mode access
+ switchport access vlan 45
+ exit
+interface range g1/0/1 - 3
+ switchport mode access
+ switchport access vlan 666
+ shutdown
+ exit
+interface range g1/1/1 - 4
+ switchport mode access
+ switchport access vlan 666
+ shutdown
+ exit
+!
+!---------- PASO 8: Rapid PVST+ ----------
+spanning-tree mode rapid-pvst
+!
+!---------- PASO 9: Gestion (VLAN 85) ----------
+interface vlan 85
+ ip address 172.16.85.243 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 172.16.85.254
+!
+!---------- PASO 9: SSH ----------
+ip domain-name clinicasr.lab
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+login block-for 120 attempts 3 within 60
+line vty 0 15
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ exit
+!
+!---------- PASO 10: Seguridad ----------
+interface range g1/0/7 - 24
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ exit
+!
+ip dhcp snooping
+ip dhcp snooping vlan 15,25,35,45
+no ip dhcp snooping information option
+ip arp inspection vlan 15,25,35,45
+!
+interface g1/0/4
+ ip dhcp snooping trust
+ ip arp inspection trust
+ exit
+interface port-channel 4
+ ip dhcp snooping trust
+ ip arp inspection trust
+ exit
+!
+end
+copy running-config startup-config

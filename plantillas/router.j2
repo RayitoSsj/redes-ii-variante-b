@@ -1,0 +1,82 @@
+{% extends "base.j2" %}
+{% block cuerpo %}
+!---------- PASO 6: Ruteo inter-VLAN, HSRPv2 y serial ----------
+ipv6 unicast-routing
+!
+interface {{ equipo.lan }}
+ no shutdown
+ exit
+interface {{ equipo.lan }}.{{ d.vlan_nativa }}
+ encapsulation dot1Q {{ d.vlan_nativa }} native
+ exit
+!
+{% for v in vlans_ruteadas %}
+{% set activo = (v.activo == equipo.hostname) %}
+{% set g6 = v.id + d.direccionamiento.grupo_hsrp_v6_offset %}
+interface {{ equipo.lan }}.{{ v.id }}
+ encapsulation dot1Q {{ v.id }}
+ ip address {{ v.v4 }}.{{ equipo.octeto }} 255.255.255.0
+{% if v.v6 is defined %}
+ ipv6 address {{ v.v6 }}::{{ equipo.ipv6_host }}/64
+ ipv6 address {{ equipo.link_local }} link-local
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag
+ ipv6 nd prefix {{ v.v6 }}::/64 no-autoconfig
+{% endif %}
+ standby version 2
+ standby {{ v.id }} ip {{ v.v4 }}.{{ d.direccionamiento.gateway_hsrp }}
+{% if activo %}
+ standby {{ v.id }} priority 150
+ standby {{ v.id }} preempt
+{% endif %}
+{% if v.v6 is defined %}
+ standby {{ g6 }} ipv6 autoconfig
+{% if activo %}
+ standby {{ g6 }} priority 150
+ standby {{ g6 }} preempt
+{% endif %}
+{% endif %}
+ exit
+!
+{% endfor %}
+interface {{ equipo.serial.interfaz }}
+ ip address {{ equipo.serial.ipv4 }} {{ d.serial_mascara }}
+ ipv6 address {{ equipo.serial.ipv6 }}/64
+{% if equipo.serial.clock_rate is defined %}
+ clock rate {{ equipo.serial.clock_rate }}
+{% endif %}
+ no shutdown
+ exit
+!
+!---------- PASO 7: DHCPv4 y DHCPv6 ----------
+{% for v in vlans_usuario %}
+{% for a, b in excluidos %}
+ip dhcp excluded-address {{ v.v4 }}.{{ a }} {{ v.v4 }}.{{ b }}
+{% endfor %}
+{% endfor %}
+!
+{% for v in vlans_usuario %}
+ip dhcp pool {{ v.nombre }}
+ network {{ v.v4 }}.0 255.255.255.0
+ default-router {{ v.v4 }}.{{ d.direccionamiento.gateway_hsrp }}
+ dns-server {{ g.dns_v4 }}
+ domain-name {{ g.dominio }}
+ exit
+{% endfor %}
+!
+! DHCPv6: cada router reparte de un /80 distinto -> nunca repiten direccion
+{% for v in vlans_usuario %}
+ipv6 dhcp pool V6-{{ v.nombre }}
+ address prefix {{ v.v6 }}:{{ equipo.dhcpv6_bloque }}::/80
+ dns-server {{ g.dns_v6 }}
+ domain-name {{ g.dominio }}
+ exit
+{% endfor %}
+!
+{% for v in vlans_usuario %}
+interface {{ equipo.lan }}.{{ v.id }}
+ ipv6 dhcp server V6-{{ v.nombre }}
+ exit
+{% endfor %}
+!
+{% endblock %}
