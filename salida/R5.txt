@@ -13,10 +13,10 @@ banner motd #Acceso restringido. Solo personal autorizado.#
 ! El usuario va antes del min-length si su contrasena tiene menos de 10 caracteres
 username admin privilege 15 algorithm-type scrypt secret cisco
 security passwords min-length 10
-enable algorithm-type scrypt secret <PASS10>
+enable algorithm-type scrypt secret <cisco>
 service password-encryption
 line console 0
- password <PASS10>
+ password <cisco>
  login
  exec-timeout 5 0
  logging synchronous
@@ -99,7 +99,7 @@ interface g0/0/0.85
  standby 85 ip 172.16.85.254
  exit
 !
-interface <SERIAL_R5>
+interface s0/1/0
  ip address 10.20.20.1 255.255.255.252
  ipv6 address 2001:DB8:CAFE:FFFF::1/64
  clock rate 128000

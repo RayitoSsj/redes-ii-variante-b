@@ -13,10 +13,10 @@ banner motd #Acceso restringido. Solo personal autorizado.#
 ! El usuario va antes del min-length si su contrasena tiene menos de 10 caracteres
 username admin privilege 15 algorithm-type scrypt secret cisco
 security passwords min-length 10
-enable algorithm-type scrypt secret <PASS10>
+enable algorithm-type scrypt secret <cisco>
 service password-encryption
 line console 0
- password <PASS10>
+ password <cisco>
  login
  exec-timeout 5 0
  logging synchronous

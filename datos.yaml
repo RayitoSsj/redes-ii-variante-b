@@ -54,7 +54,7 @@ routers:
     dhcp_rango: [1, 120]
     dhcpv6_bloque: 1        # reparte de 2001:DB8:CAFE:xx:1::/80
     serial:
-      interfaz: "<SERIAL_R5>"
+      interfaz: "s0/1/0"
       ipv4: 10.20.20.1
       ipv6: "2001:DB8:CAFE:FFFF::1"
       clock_rate: 128000    # R5 es DCE
@@ -66,7 +66,7 @@ routers:
     dhcp_rango: [121, 240]
     dhcpv6_bloque: 2        # reparte de 2001:DB8:CAFE:xx:2::/80
     serial:
-      interfaz: "<SERIAL_R6>"
+      interfaz: "s0/1/0"
       ipv4: 10.20.20.2
       ipv6: "2001:DB8:CAFE:FFFF::2"
 
