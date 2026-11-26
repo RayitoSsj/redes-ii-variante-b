@@ -9,11 +9,11 @@ general:
   dominio: clinicasr.lab
   banner: "Acceso restringido. Solo personal autorizado."
   # Contraseña de enable y consola (la ficha pide 10 caracteres o más)
-  enable_secret: "cisco"
-  console_password: "cisco"
+  enable_secret: "cisco12345"
+  console_password: "cisco12345"
   # Usuario local para SSH (privilegio 15)
   usuario: admin
-  usuario_password: cisco
+  usuario_password: "cisco12345"
   # true  = equipo físico (IOS XE): usa "algorithm-type scrypt"
   # false = Packet Tracer: usa "secret" normal
   scrypt: false
