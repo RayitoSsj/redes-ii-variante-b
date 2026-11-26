@@ -1,6 +1,9 @@
 {# Bloques comunes a los 4 switches #}
 {% extends "base.j2" %}
 {% macro troncal() %}
+{% if g.get('encapsulation_dot1q') %}
+ switchport trunk encapsulation dot1q
+{% endif %}
  switchport mode trunk
  switchport nonegotiate
  switchport trunk native vlan {{ d.vlan_nativa }}
@@ -15,7 +18,9 @@ interface range {{ equipo.etherchannel.puertos }}
  exit
 !
 !---------- PASO 3: Troncales ----------
+{% if not g.get('encapsulation_dot1q') %}
 ! (si el switch lo pide, agregar antes: switchport trunk encapsulation dot1q)
+{% endif %}
 {% for t in equipo.troncales %}
 interface {% if ' - ' in t %}range {% endif %}{{ t }}
 {{ troncal() }}

@@ -8,8 +8,8 @@ general:
   dominio: clinicasr.lab
   banner: "Acceso restringido. Solo personal autorizado."
   # Contraseña de enable y consola (la ficha pide 10 caracteres o más)
-  enable_secret: "<PASS10>"
-  console_password: "<PASS10>"
+  enable_secret: "<cisco>"
+  console_password: "<cisco>"
   # Usuario local para SSH (privilegio 15)
   usuario: admin
   usuario_password: cisco

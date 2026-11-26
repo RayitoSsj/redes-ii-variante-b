@@ -1,0 +1,110 @@
+# ============================================================
+# Práctica integradora Redes II · Variante B · Clínica San Rafael
+# VERSION PARA PACKET TRACER (switches 3650-24PS, routers ISR4321 + NIM-2T)
+# Datos de la ficha. Todo lo que cambie de la red se cambia AQUÍ,
+# las plantillas no se tocan.
+# ============================================================
+
+general:
+  dominio: clinicasr.lab
+  banner: "Acceso restringido. Solo personal autorizado."
+  # Contraseña de enable y consola (la ficha pide 10 caracteres o más)
+  enable_secret: "cisco"
+  console_password: "cisco"
+  # Usuario local para SSH (privilegio 15)
+  usuario: admin
+  usuario_password: cisco
+  # true  = equipo físico (IOS XE): usa "algorithm-type scrypt"
+  # false = Packet Tracer: usa "secret" normal
+  scrypt: false
+  # Packet Tracer (3650) pide encapsulacion en las troncales
+  encapsulation_dot1q: true
+  rsa_bits: 1024
+  dns_v4: 8.8.8.8
+  dns_v6: "2001:4860:4860::8888"
+
+vtp:
+  dominio: CLINICA
+  version: 2
+  password: "Vtp-B2026!"
+
+vlan_nativa: 777
+vlan_sin_uso: 666
+vlan_gestion: 85
+
+# activo: hostname del router HSRP activo de la VLAN
+# puertos: puertos de acceso en los switches de acceso
+vlans:
+  - {id: 15,  nombre: MEDICOS,        v4: 172.16.15, v6: "2001:DB8:CAFE:15", activo: R6, puertos: "g1/0/7 - 12"}
+  - {id: 25,  nombre: ENFERMERIA,     v4: 172.16.25, v6: "2001:DB8:CAFE:25", activo: R6, puertos: "g1/0/13 - 17"}
+  - {id: 35,  nombre: ADMINISTRACION, v4: 172.16.35, v6: "2001:DB8:CAFE:35", activo: R5, puertos: "g1/0/18 - 22"}
+  - {id: 45,  nombre: PACIENTES,      v4: 172.16.45, v6: "2001:DB8:CAFE:45", activo: R5, puertos: "g1/0/23 - 24"}
+  - {id: 85,  nombre: GESTION,        v4: 172.16.85, activo: R6, gestion: true}
+  - {id: 777, nombre: NATIVA}
+  - {id: 666, nombre: SIN_USO}
+
+# Regla de direccionamiento (último octeto)
+direccionamiento:
+  gateway_hsrp: 254
+  grupo_hsrp_v6_offset: 1000
+
+routers:
+  - hostname: R5            # R1 en el documento
+    octeto: 253
+    ipv6_host: A
+    link_local: "FE80::1"
+    lan: g0/0/0
+    dhcp_rango: [1, 120]
+    dhcpv6_bloque: 1        # reparte de 2001:DB8:CAFE:xx:1::/80
+    serial:
+      interfaz: "s0/1/0"
+      ipv4: 10.20.20.1
+      ipv6: "2001:DB8:CAFE:FFFF::1"
+      clock_rate: 128000    # R5 es DCE
+  - hostname: R6            # R2 en el documento
+    octeto: 252
+    ipv6_host: B
+    link_local: "FE80::2"
+    lan: g0/0/0
+    dhcp_rango: [121, 240]
+    dhcpv6_bloque: 2        # reparte de 2001:DB8:CAFE:xx:2::/80
+    serial:
+      interfaz: "s0/1/0"
+      ipv4: 10.20.20.2
+      ipv6: "2001:DB8:CAFE:FFFF::2"
+
+serial_mascara: 255.255.255.252
+
+switches:
+  - hostname: DS5           # DS1 en el documento
+    rol: distribucion
+    vtp_modo: server
+    crea_vlans: true
+    router: R5              # router al que está conectado
+    gestion_ip: 172.16.85.241
+    troncales: ["g1/0/2 - 4"]
+    etherchannel: {grupo: 3, puertos: "g1/0/5 - 6", modo: auto}
+  - hostname: DS6           # DS2 en el documento
+    rol: distribucion
+    vtp_modo: server
+    crea_vlans: false
+    router: R6
+    gestion_ip: 172.16.85.242
+    troncales: ["g1/0/2 - 4"]
+    etherchannel: {grupo: 4, puertos: "g1/0/5 - 6", modo: passive}
+  - hostname: AS7           # AS1 en el documento
+    rol: acceso
+    vtp_modo: client
+    gestion_ip: 172.16.85.243
+    troncales: ["g1/0/4"]
+    etherchannel: {grupo: 4, puertos: "g1/0/5 - 6", modo: active}
+    puertos_sin_uso: ["g1/0/1 - 3", "g1/1/1 - 4"]
+    puertos_hosts: "g1/0/7 - 24"
+  - hostname: AS8           # AS2 en el documento
+    rol: acceso
+    vtp_modo: client
+    gestion_ip: 172.16.85.244
+    troncales: ["g1/0/4"]
+    etherchannel: {grupo: 3, puertos: "g1/0/5 - 6", modo: desirable}
+    puertos_sin_uso: ["g1/0/1 - 3", "g1/1/1 - 4"]
+    puertos_hosts: "g1/0/7 - 24"
